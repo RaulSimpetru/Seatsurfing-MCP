@@ -1,0 +1,11 @@
+{
+  "name": "seatsurfing",
+  "description": "Book desks and rooms in Seatsurfing via Claude Code",
+  "version": "1.0.0",
+  "author": {
+    "name": "Raul Simpetru"
+  },
+  "repository": "https://github.com/RaulSimpetru/Seatsurfing-MCP",
+  "license": "MIT",
+  "keywords": ["seatsurfing", "booking", "desk", "room", "mcp", "hybrid-work"]
+}

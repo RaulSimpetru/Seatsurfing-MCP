@@ -1,0 +1,24 @@
+{
+  "name": "seatsurfing-mcp-marketplace",
+  "owner": {
+    "name": "Raul Simpetru"
+  },
+  "metadata": {
+    "description": "Seatsurfing desk booking plugin for Claude Code",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "seatsurfing",
+      "source": ".",
+      "description": "Book desks and rooms in Seatsurfing via Claude Code",
+      "version": "1.0.0",
+      "author": {
+        "name": "Raul Simpetru"
+      },
+      "license": "MIT",
+      "keywords": ["seatsurfing", "booking", "desk", "room", "hybrid-work"],
+      "category": "productivity"
+    }
+  ]
+}

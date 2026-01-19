@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "seatsurfing": {
+      "command": "uv",
+      "args": ["run", "--directory", "${CLAUDE_PLUGIN_ROOT}", "seatsurfing-mcp"],
+      "env": {
+        "SEATSURFING_URL": "${SEATSURFING_URL}",
+        "SEATSURFING_EMAIL": "${SEATSURFING_EMAIL}",
+        "SEATSURFING_PASSWORD": "${SEATSURFING_PASSWORD}",
+        "SEATSURFING_ORG_ID": "${SEATSURFING_ORG_ID}"
+      }
+    }
+  }
+}
