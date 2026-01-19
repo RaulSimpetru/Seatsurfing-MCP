@@ -203,7 +203,10 @@ class SeatsurfingClient:
             {"spaceId": space_id, "enter": enter, "leave": leave, "subject": subject, "userEmail": ""},
         )
         if response.status_code != 201:
-            raise RuntimeError(f"Booking failed with status {response.status_code}: {response.text}")
+            error_msg = f"Booking failed with status {response.status_code}: {response.text}"
+            if response.status_code == 400:
+                error_msg += "\n\nHint: Some spaces require a subject/reason. Try adding subject parameter."
+            raise RuntimeError(error_msg)
         return response.headers.get("X-Object-ID", "created")
 
     async def delete_booking(self, booking_id: str) -> None:
