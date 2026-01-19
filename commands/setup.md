@@ -25,4 +25,9 @@ Then write these to a config file at ~/.seatsurfing/config.json using the Write 
 
 Create the ~/.seatsurfing directory if it doesn't exist.
 
-After saving, confirm to the user that their credentials are saved and they can now use the booking commands.
+After saving:
+1. Call seatsurfing_login to verify the credentials work
+2. Call seatsurfing_refresh_spaces to pre-fetch all locations and spaces
+3. Confirm to the user that their credentials are saved and spaces cache is populated
+
+The spaces cache at ~/.seatsurfing/spaces.json enables faster booking by avoiding repeated API calls.

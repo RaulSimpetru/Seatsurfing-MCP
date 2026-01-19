@@ -21,6 +21,11 @@ def get_config_path() -> Path:
     return Path.home() / ".seatsurfing" / "config.json"
 
 
+def get_spaces_cache_path() -> Path:
+    """Get the path to the spaces cache file."""
+    return Path.home() / ".seatsurfing" / "spaces.json"
+
+
 def load_config() -> dict:
     """Load config from ~/.seatsurfing/config.json if it exists."""
     config_path = get_config_path()
@@ -30,6 +35,24 @@ def load_config() -> dict:
         except (json.JSONDecodeError, IOError):
             pass
     return {}
+
+
+def load_spaces_cache() -> dict:
+    """Load spaces cache from ~/.seatsurfing/spaces.json if it exists."""
+    cache_path = get_spaces_cache_path()
+    if cache_path.exists():
+        try:
+            return json.loads(cache_path.read_text())
+        except (json.JSONDecodeError, IOError):
+            pass
+    return {}
+
+
+def save_spaces_cache(data: dict) -> None:
+    """Save spaces cache to ~/.seatsurfing/spaces.json."""
+    cache_path = get_spaces_cache_path()
+    cache_path.parent.mkdir(parents=True, exist_ok=True)
+    cache_path.write_text(json.dumps(data, indent=2))
 
 
 def get_credential(key: str, env_var: str, config: dict) -> str:
@@ -235,6 +258,72 @@ def parse_datetime(input_str: str) -> str:
 
 
 # ============================================================================
+# Cache Functions
+# ============================================================================
+
+async def refresh_spaces_cache(c: "SeatsurfingClient") -> dict:
+    """Fetch all locations and spaces, save to cache, and return the data."""
+    locations = await c.get_locations()
+
+    spaces_by_location = {}
+    for loc in locations:
+        spaces = await c.get_spaces(loc["id"])
+        spaces_by_location[loc["id"]] = [
+            {
+                "id": s["id"],
+                "name": s["name"],
+                "x": s.get("x", 0),
+                "y": s.get("y", 0),
+                "width": s.get("width", 0),
+                "height": s.get("height", 0),
+                "rotation": s.get("rotation", 0),
+            }
+            for s in spaces
+        ]
+
+    cache_data = {
+        "updated_at": datetime.now().isoformat(),
+        "locations": [{"id": loc["id"], "name": loc["name"]} for loc in locations],
+        "spaces": spaces_by_location,
+    }
+
+    save_spaces_cache(cache_data)
+    return cache_data
+
+
+def render_spaces_list(spaces: list[dict], availability: dict[str, bool]) -> str:
+    """Render a simple list of spaces with availability status."""
+    if not spaces:
+        return "No spaces found."
+
+    # Sort alphabetically by name
+    sorted_spaces = sorted(spaces, key=lambda s: s["name"].lower())
+
+    available = []
+    occupied = []
+
+    for space in sorted_spaces:
+        is_available = availability.get(space["id"], True)
+        if is_available:
+            available.append(space["name"])
+        else:
+            occupied.append(space["name"])
+
+    lines = []
+
+    lines.append(f"AVAILABLE ({len(available)}):")
+    for name in available:
+        lines.append(f"\t- {name}")
+
+    lines.append("")
+    lines.append(f"OCCUPIED ({len(occupied)}):")
+    for name in occupied:
+        lines.append(f"\t- {name}")
+
+    return "\n".join(lines)
+
+
+# ============================================================================
 # MCP Server
 # ============================================================================
 
@@ -370,6 +459,33 @@ async def list_tools() -> list[Tool]:
                     },
                 },
                 "required": ["booking_id"],
+            },
+        ),
+        Tool(
+            name="seatsurfing_refresh_spaces",
+            description="Refresh the cached list of locations and bookable spaces. Run this after setup or when spaces have changed.",
+            inputSchema={"type": "object", "properties": {}, "required": []},
+        ),
+        Tool(
+            name="seatsurfing_view_availability",
+            description="List all spaces in a location grouped by availability status for a given time period.",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "location_id": {
+                        "type": "string",
+                        "description": "ID of the location. Use seatsurfing_list_locations to get IDs.",
+                    },
+                    "start_time": {
+                        "type": "string",
+                        "description": "Start time to check availability (YYYY-MM-DD HH:MM).",
+                    },
+                    "end_time": {
+                        "type": "string",
+                        "description": "End time to check availability (YYYY-MM-DD HH:MM).",
+                    },
+                },
+                "required": ["location_id"],
             },
         ),
     ]
@@ -508,6 +624,69 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
                 type="text",
                 text=f"Booking {booking_id} has been cancelled.",
             )]
+
+        elif name == "seatsurfing_refresh_spaces":
+            c = get_client()
+            cache_data = await refresh_spaces_cache(c)
+
+            total_spaces = sum(len(spaces) for spaces in cache_data["spaces"].values())
+            lines = [f"Refreshed cache with {len(cache_data['locations'])} location(s) and {total_spaces} space(s):\n"]
+
+            for loc in cache_data["locations"]:
+                loc_spaces = cache_data["spaces"].get(loc["id"], [])
+                lines.append(f"- {loc['name']}: {len(loc_spaces)} space(s)")
+
+            return [TextContent(type="text", text="\n".join(lines))]
+
+        elif name == "seatsurfing_view_availability":
+            c = get_client()
+            location_id = arguments["location_id"]
+
+            # Load spaces from cache
+            cache_data = load_spaces_cache()
+            if not cache_data or "spaces" not in cache_data:
+                return [TextContent(
+                    type="text",
+                    text="No spaces cache found. Run seatsurfing_refresh_spaces first.",
+                )]
+
+            spaces = cache_data["spaces"].get(location_id, [])
+            if not spaces:
+                return [TextContent(
+                    type="text",
+                    text=f"No spaces found for location {location_id}. Check location_id or refresh cache.",
+                )]
+
+            # Check availability if times provided
+            availability = {}
+            time_info = ""
+            if arguments.get("start_time") and arguments.get("end_time"):
+                start_time = parse_datetime(arguments["start_time"])
+                end_time = parse_datetime(arguments["end_time"])
+                avail_data = await c.get_space_availability(location_id, start_time, end_time)
+                availability = {s["id"]: s.get("available", False) for s in avail_data}
+                time_info = f"Time: {format_datetime(start_time)} to {format_datetime(end_time)}\n"
+            else:
+                # No times: show all as unknown (mark as available for display)
+                availability = {s["id"]: True for s in spaces}
+                time_info = "(availability not checked - provide start_time and end_time)\n"
+
+            # Get location name
+            location_name = location_id
+            for loc in cache_data.get("locations", []):
+                if loc["id"] == location_id:
+                    location_name = loc["name"]
+                    break
+
+            # Render list
+            spaces_list = render_spaces_list(spaces, availability)
+
+            header = (
+                f"Location: {location_name}\n"
+                f"{time_info}"
+            )
+
+            return [TextContent(type="text", text=header + "\n" + spaces_list)]
 
         else:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]

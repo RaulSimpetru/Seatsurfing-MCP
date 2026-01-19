@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "Seatsurfing desk booking plugin for Claude Code",
-    "version": "1.0.0"
+    "version": "1.1.0"
   },
   "plugins": [
     {
       "name": "seatsurfing",
       "source": "./",
       "description": "Book desks and rooms in Seatsurfing via Claude Code",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "author": {
         "name": "Raul Simpetru"
       },

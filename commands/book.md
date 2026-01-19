@@ -16,7 +16,11 @@ Examples of valid arguments:
 
 Steps:
 1. If no arguments, ask what space and when
-2. Search for the space using seatsurfing_list_spaces
-3. Check availability using seatsurfing_check_availability
-4. Create the booking using seatsurfing_create_booking
-5. Confirm the booking to the user
+2. Read the spaces cache from ~/.seatsurfing/spaces.json
+   - If cache is empty or missing, call seatsurfing_refresh_spaces first
+3. Match the requested space name against cached spaces (fuzzy match OK)
+4. Check availability using seatsurfing_check_availability
+5. Create the booking using seatsurfing_create_booking
+6. Confirm the booking to the user
+
+The cache contains space IDs and names, avoiding API calls to list_locations and list_spaces each time.

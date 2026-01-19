@@ -4,13 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "seatsurfing-mcp"
-version = "0.1.0"
+version = "1.1.0"
 description = "MCP server for Seatsurfing desk/room booking system"
 readme = "README.md"
 license = "MIT"
 requires-python = ">=3.10"
 authors = [
-    { name = "Your Name", email = "you@example.com" }
+    { name = "Raul Simpetru" }
 ]
 keywords = ["mcp", "seatsurfing", "booking", "desk-booking", "claude"]
 classifiers = [
@@ -31,8 +31,8 @@ dependencies = [
 seatsurfing-mcp = "seatsurfing_mcp:main"
 
 [project.urls]
-Homepage = "https://github.com/yourusername/seatsurfing-mcp"
-Repository = "https://github.com/yourusername/seatsurfing-mcp"
+Homepage = "https://github.com/RaulSimpetru/Seatsurfing-MCP"
+Repository = "https://github.com/RaulSimpetru/Seatsurfing-MCP"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/seatsurfing_mcp"]
