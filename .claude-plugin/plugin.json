@@ -1,7 +1,7 @@
 {
   "name": "seatsurfing",
   "description": "Book desks and rooms in Seatsurfing via Claude Code",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": {
     "name": "Raul Simpetru"
   },
