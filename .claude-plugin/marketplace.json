@@ -10,7 +10,7 @@
   "plugins": [
     {
       "name": "seatsurfing",
-      "source": ".",
+      "source": "./",
       "description": "Book desks and rooms in Seatsurfing via Claude Code",
       "version": "1.0.0",
       "author": {
