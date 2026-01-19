@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-01-19
+
+### Changed
+
+- Setup command now opens config file in editor instead of asking for credentials in chat
+- Passwords no longer appear in conversation history
+
 ## [1.2.1] - 2026-01-19
 
 ### Fixed
@@ -62,7 +69,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/seatsurfing:my-bookings` - List bookings command
 - `/seatsurfing:cancel` - Cancel booking command
 
-[Unreleased]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.2.1...HEAD
+[Unreleased]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.0.0...v1.1.0
