@@ -52,7 +52,7 @@ def save_spaces_cache(data: dict) -> None:
     """Save spaces cache to ~/.seatsurfing/spaces.json."""
     cache_path = get_spaces_cache_path()
     cache_path.parent.mkdir(parents=True, exist_ok=True)
-    cache_path.write_text(json.dumps(data, indent=2))
+    cache_path.write_text(json.dumps(data, separators=(",", ":")))
 
 
 def get_credential(key: str, env_var: str, config: dict) -> str:
@@ -272,15 +272,7 @@ async def refresh_spaces_cache(c: "SeatsurfingClient") -> dict:
     for loc in locations:
         spaces = await c.get_spaces(loc["id"])
         spaces_by_location[loc["id"]] = [
-            {
-                "id": s["id"],
-                "name": s["name"],
-                "x": s.get("x", 0),
-                "y": s.get("y", 0),
-                "width": s.get("width", 0),
-                "height": s.get("height", 0),
-                "rotation": s.get("rotation", 0),
-            }
+            {"id": s["id"], "name": s["name"]}
             for s in spaces
         ]
 
@@ -527,10 +519,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             await client.login(email, password, organization_id)
             user = await client.get_me()
 
-            return [TextContent(
-                type="text",
-                text=f"Successfully logged in as {user.get('email', 'unknown')}",
-            )]
+            return [TextContent(type="text", text=f"Logged in: {user.get('email', 'unknown')}")]
 
         elif name == "seatsurfing_list_locations":
             c = get_client()
@@ -539,11 +528,9 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             if not locations:
                 return [TextContent(type="text", text="No locations found.")]
 
-            lines = [f"Found {len(locations)} location(s):\n"]
+            lines = []
             for loc in locations:
-                desc = f"\n\t{loc.get('description')}" if loc.get("description") else ""
-                lines.append(f"- {loc['name']} (ID: {loc['id']}){desc}")
-
+                lines.append(f"{loc['name']}\t{loc['id']}")
             return [TextContent(type="text", text="\n".join(lines))]
 
         elif name == "seatsurfing_list_spaces":
@@ -554,10 +541,9 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             if not spaces:
                 return [TextContent(type="text", text="No spaces found in this location.")]
 
-            lines = [f"Found {len(spaces)} space(s):\n"]
+            lines = []
             for space in spaces:
-                lines.append(f"- {space['name']} (ID: {space['id']})")
-
+                lines.append(f"{space['name']}\t{space['id']}")
             return [TextContent(type="text", text="\n".join(lines))]
 
         elif name == "seatsurfing_check_availability":
@@ -571,19 +557,12 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             available = [s for s in spaces if s.get("available")]
             occupied = [s for s in spaces if not s.get("available")]
 
-            lines = [f"Availability for {format_datetime(start_time)} to {format_datetime(end_time)}:\n"]
-
-            if available:
-                lines.append(f"Available ({len(available)}):")
-                for s in available:
-                    lines.append(f"\t- {s['name']} (ID: {s['id']})")
-                lines.append("")
-
-            if occupied:
-                lines.append(f"Occupied ({len(occupied)}):")
-                for s in occupied:
-                    lines.append(f"\t- {s['name']}")
-
+            lines = [f"AVAILABLE ({len(available)}):"]
+            for s in available:
+                lines.append(f"\t{s['name']}\t{s['id']}")
+            lines.append(f"OCCUPIED ({len(occupied)}):")
+            for s in occupied:
+                lines.append(f"\t{s['name']}")
             return [TextContent(type="text", text="\n".join(lines))]
 
         elif name == "seatsurfing_create_booking":
@@ -595,10 +574,7 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
 
             booking_id = await c.create_booking(space_id, start_time, end_time, subject)
 
-            return [TextContent(
-                type="text",
-                text=f"Booking created successfully!\n\nBooking ID: {booking_id}\nTime: {format_datetime(start_time)} to {format_datetime(end_time)}",
-            )]
+            return [TextContent(type="text", text=f"Booked: {booking_id}")]
 
         elif name == "seatsurfing_list_my_bookings":
             c = get_client()
@@ -607,39 +583,25 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             if not bookings:
                 return [TextContent(type="text", text="You have no upcoming bookings.")]
 
-            lines = [f"Your upcoming bookings ({len(bookings)}):\n"]
+            lines = []
             for b in bookings:
-                space_name = b.get("space", {}).get("name", b.get("spaceId", "Unknown"))
-                lines.append(
-                    f"- {space_name}\n"
-                    f"\tID: {b['id']}\n"
-                    f"\tTime: {format_datetime(b['enter'])} -> {format_datetime(b['leave'])}"
-                )
-
-            return [TextContent(type="text", text="\n\n".join(lines))]
+                space_name = b.get("space", {}).get("name", b.get("spaceId", "?"))
+                lines.append(f"{space_name}\t{format_datetime(b['enter'])}-{format_datetime(b['leave'])}\t{b['id']}")
+            return [TextContent(type="text", text="\n".join(lines))]
 
         elif name == "seatsurfing_cancel_booking":
             c = get_client()
             booking_id = arguments["booking_id"]
             await c.delete_booking(booking_id)
 
-            return [TextContent(
-                type="text",
-                text=f"Booking {booking_id} has been cancelled.",
-            )]
+            return [TextContent(type="text", text=f"Cancelled: {booking_id}")]
 
         elif name == "seatsurfing_refresh_spaces":
             c = get_client()
             cache_data = await refresh_spaces_cache(c)
 
             total_spaces = sum(len(spaces) for spaces in cache_data["spaces"].values())
-            lines = [f"Refreshed cache with {len(cache_data['locations'])} location(s) and {total_spaces} space(s):\n"]
-
-            for loc in cache_data["locations"]:
-                loc_spaces = cache_data["spaces"].get(loc["id"], [])
-                lines.append(f"- {loc['name']}: {len(loc_spaces)} space(s)")
-
-            return [TextContent(type="text", text="\n".join(lines))]
+            return [TextContent(type="text", text=f"Cache: {len(cache_data['locations'])} locations, {total_spaces} spaces")]
 
         elif name == "seatsurfing_view_availability":
             c = get_client()
@@ -662,34 +624,18 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
 
             # Check availability if times provided
             availability = {}
-            time_info = ""
             if arguments.get("start_time") and arguments.get("end_time"):
                 start_time = parse_datetime(arguments["start_time"])
                 end_time = parse_datetime(arguments["end_time"])
                 avail_data = await c.get_space_availability(location_id, start_time, end_time)
                 availability = {s["id"]: s.get("available", False) for s in avail_data}
-                time_info = f"Time: {format_datetime(start_time)} to {format_datetime(end_time)}\n"
             else:
                 # No times: show all as unknown (mark as available for display)
                 availability = {s["id"]: True for s in spaces}
-                time_info = "(availability not checked - provide start_time and end_time)\n"
-
-            # Get location name
-            location_name = location_id
-            for loc in cache_data.get("locations", []):
-                if loc["id"] == location_id:
-                    location_name = loc["name"]
-                    break
 
             # Render list
             spaces_list = render_spaces_list(spaces, availability)
-
-            header = (
-                f"Location: {location_name}\n"
-                f"{time_info}"
-            )
-
-            return [TextContent(type="text", text=header + "\n" + spaces_list)]
+            return [TextContent(type="text", text=spaces_list)]
 
         else:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]

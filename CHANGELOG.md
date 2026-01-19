@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-01-19
+
+### Changed
+
+- Reduced token usage in MCP tool responses (concise output format)
+- Reduced cache file size (removed unused spatial data, compact JSON)
+
 ## [1.1.0] - 2026-01-19
 
 ### Added
@@ -49,6 +56,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/seatsurfing:my-bookings` - List bookings command
 - `/seatsurfing:cancel` - Cancel booking command
 
-[Unreleased]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/releases/tag/v1.0.0
