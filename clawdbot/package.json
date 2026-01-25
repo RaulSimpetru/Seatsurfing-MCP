@@ -1,0 +1,10 @@
+{
+  "name": "@clawdbot/seatsurfing",
+  "version": "1.0.0",
+  "type": "module",
+  "main": "index.ts",
+  "description": "Clawdbot Seatsurfing plugin for desk and room booking",
+  "dependencies": {
+    "@sinclair/typebox": "^0.34.48"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "id": "seatsurfing",
+  "name": "Seatsurfing",
+  "description": "Book desks and rooms in Seatsurfing",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

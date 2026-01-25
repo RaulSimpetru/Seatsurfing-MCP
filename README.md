@@ -162,11 +162,35 @@ Make sure all four environment variables are set correctly, including `SEATSURFI
 ### 400 Bad Request on login
 You're probably missing the `SEATSURFING_ORG_ID`. See "Finding Your Organization ID" above.
 
+## Using Clawdbot
+
+Seatsurfing can also be used with [Clawdbot](https://clawd.bot) to book desks via Telegram, Signal, Discord, and other channels.
+
+### Installation
+
+```bash
+# Copy the plugin to clawdbot extensions
+cp -r clawdbot ~/.clawdbot/extensions/seatsurfing
+
+# Install dependencies
+cd ~/.clawdbot/extensions/seatsurfing && npm install
+
+# Enable the plugin
+clawdbot plugins enable seatsurfing
+
+# Restart the gateway
+clawdbot gateway restart
+```
+
+### Configuration
+
+The plugin uses the same credentials as the MCP server from `~/.seatsurfing/config.json` or environment variables.
+
 ## Requirements
 
 - Python 3.10+
 - A Seatsurfing instance with API access
-- Claude Code or Claude Desktop
+- Claude Code, Claude Desktop, or Clawdbot
 
 ## License
 

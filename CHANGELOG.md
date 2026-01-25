@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-01-25
+
+### Added
+
+- Clawdbot plugin for booking via Telegram, Signal, Discord, and other channels
+- TypeScript implementation with all 8 MCP tools
+
 ## [1.3.0] - 2026-01-19
 
 ### Changed
@@ -69,7 +76,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/seatsurfing:my-bookings` - List bookings command
 - `/seatsurfing:cancel` - Cancel booking command
 
-[Unreleased]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.4.0...HEAD
+[1.4.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.1.0...v1.2.0
