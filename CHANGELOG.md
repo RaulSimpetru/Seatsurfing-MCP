@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.4.1] - 2026-11-11
+
+### Fixed
+
+- Pin the MCP SDK below 2.0. The server crashed on startup with SDK 2.x (`'Server' object has no attribute 'list_tools'`).
+- Align the version in `plugin.json`, `marketplace.json` and `pyproject.toml`.
+
 ## [1.4.0] - 2026-01-25
 
 ### Added
