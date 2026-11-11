@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- README: the `uvx` install lines now install from this repository (the package is not on PyPI), the command and tool tables are complete, and the development and troubleshooting sections match the project.
+
 ## [1.5.0] - 2026-11-11
 
 ### Added
@@ -95,7 +99,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `/seatsurfing:my-bookings` - List bookings command
 - `/seatsurfing:cancel` - Cancel booking command
 
-[Unreleased]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.4.0...HEAD
+[Unreleased]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.5.0...HEAD
+[1.5.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.4.1...v1.5.0
+[1.4.1]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.4.0...v1.4.1
 [1.4.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.3.0...v1.4.0
 [1.3.0]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.2.1...v1.3.0
 [1.2.1]: https://github.com/RaulSimpetru/Seatsurfing-MCP/compare/v1.2.0...v1.2.1

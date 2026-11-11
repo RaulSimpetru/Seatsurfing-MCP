@@ -30,8 +30,10 @@ claude mcp add seatsurfing \
 	-e SEATSURFING_EMAIL=you@example.com \
 	-e SEATSURFING_PASSWORD=yourpass \
 	-e SEATSURFING_ORG_ID=your-org-uuid \
-	-- uvx seatsurfing-mcp
+	-- uvx --from git+https://github.com/RaulSimpetru/Seatsurfing-MCP seatsurfing-mcp
 ```
+
+The package is not on PyPI, so `uvx` installs it from this repository. For an SSO account, pass `SEATSURFING_API_TOKEN` instead of the password and organization ID (see "SSO accounts" below).
 
 ### Using Claude Desktop
 
@@ -46,7 +48,7 @@ Add to your config file:
   "mcpServers": {
     "seatsurfing": {
       "command": "uvx",
-      "args": ["seatsurfing-mcp"],
+      "args": ["--from", "git+https://github.com/RaulSimpetru/Seatsurfing-MCP", "seatsurfing-mcp"],
       "env": {
         "SEATSURFING_URL": "https://seatsurfing.example.com",
         "SEATSURFING_EMAIL": "you@example.com",
@@ -106,8 +108,10 @@ Only needed for password login. Open `<your Seatsurfing URL>/auth/org/<hostname 
 |---------|-------------|
 | `/seatsurfing:setup` | Configure your credentials |
 | `/seatsurfing:book` | Book a space |
+| `/seatsurfing:availability` | View space availability for a location |
 | `/seatsurfing:my-bookings` | List your upcoming bookings |
 | `/seatsurfing:cancel` | Cancel a booking |
+| `/seatsurfing:refresh` | Refresh the spaces cache |
 
 ### MCP Tools
 
@@ -120,6 +124,8 @@ Only needed for password login. Open `<your Seatsurfing URL>/auth/org/<hostname 
 | `seatsurfing_create_booking` | Create a new booking |
 | `seatsurfing_list_my_bookings` | List your bookings |
 | `seatsurfing_cancel_booking` | Cancel a booking |
+| `seatsurfing_refresh_spaces` | Refresh the cached locations and spaces |
+| `seatsurfing_view_availability` | List a location's spaces grouped by availability |
 
 ### Examples
 
@@ -147,21 +153,20 @@ pip install -e .
 ## Development
 
 ```bash
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # or `venv\Scripts\activate` on Windows
+# Install the project and its dependencies
+uv sync
 
-# Install in dev mode
-pip install -e ".[dev]"
+# Run the tests (a fake server, no Seatsurfing instance needed)
+uv run python tests/test_token_mode.py
 
 # Run locally
-seatsurfing-mcp
+uv run seatsurfing-mcp
 ```
 
 ## Troubleshooting
 
 ### "Not authenticated" error
-Make sure all four environment variables are set correctly, including `SEATSURFING_ORG_ID`.
+Make sure the URL, your email and either the API token or both the password and `SEATSURFING_ORG_ID` are set.
 
 ### Can't connect to Seatsurfing
 - Check that the URL is correct (no trailing `/ui/`)
@@ -169,7 +174,7 @@ Make sure all four environment variables are set correctly, including `SEATSURFI
 - Try the URL in a browser first
 
 ### 400 Bad Request on login
-You're probably missing the `SEATSURFING_ORG_ID`. See "Finding Your Organization ID" above.
+Seatsurfing answers 400 for a wrong password, an unknown email, a missing `SEATSURFING_ORG_ID` and for accounts that sign in through SSO. Repeated wrong passwords can lock the account. If you sign in with an SSO button, use an API token (see "SSO accounts" above); otherwise see "Finding Your Organization ID".
 
 ## Using Clawdbot
 
@@ -193,7 +198,7 @@ clawdbot gateway restart
 
 ### Configuration
 
-The plugin uses the same credentials as the MCP server from `~/.seatsurfing/config.json` or environment variables.
+The plugin reads `~/.seatsurfing/config.json` or the same environment variables as the MCP server. It supports password login only, not the API token.
 
 ## Requirements
 
