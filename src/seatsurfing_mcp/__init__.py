@@ -8,7 +8,7 @@ import asyncio
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlencode
@@ -71,8 +71,13 @@ from mcp.types import Tool, TextContent
 class SeatsurfingClient:
     """Client for the Seatsurfing REST API."""
 
-    def __init__(self, base_url: str):
+    def __init__(self, base_url: str, api_token: str = "", user_email: str = ""):
         self.base_url = base_url.rstrip("/")
+        # API token of a Seatsurfing service account, for servers where the
+        # user signs in through SSO and has no password. The token replaces the
+        # login, and bookings are made for user_email, not for the service account.
+        self.api_token = api_token
+        self.user_email = user_email
         self.access_token: str | None = None
         self.refresh_token: str | None = None
         self.token_expires_at: float = 0
@@ -88,8 +93,9 @@ class SeatsurfingClient:
         url = f"{self.base_url}{endpoint}"
         headers = {"Content-Type": "application/json"}
 
-        if authenticated and self.access_token:
-            headers["Authorization"] = f"Bearer {self.access_token}"
+        token = self.api_token or self.access_token
+        if authenticated and token:
+            headers["Authorization"] = f"Bearer {token}"
 
         async with httpx.AsyncClient() as client:
             response = await client.request(
@@ -120,6 +126,8 @@ class SeatsurfingClient:
 
     async def ensure_authenticated(self) -> None:
         """Ensure we have a valid token, refreshing if needed."""
+        if self.api_token:
+            return
         if not self.access_token:
             raise RuntimeError("Not authenticated - please login first")
 
@@ -151,7 +159,7 @@ class SeatsurfingClient:
 
     def is_authenticated(self) -> bool:
         """Check if we have valid credentials."""
-        return self.access_token is not None
+        return bool(self.api_token or self.access_token)
 
     async def get_me(self) -> dict:
         """Get current user info."""
@@ -190,7 +198,18 @@ class SeatsurfingClient:
     async def get_my_bookings(self) -> list[dict]:
         """Get current user's bookings."""
         await self.ensure_authenticated()
-        response = await self._request("GET", "/booking/")
+        if self.api_token:
+            # "/booking/" lists the caller's own bookings, and a service account
+            # has none. Times are the location's wall clock written as UTC.
+            now = datetime.now()
+            params = urlencode({
+                "start": now.strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                "end": (now + timedelta(days=365)).strftime("%Y-%m-%dT%H:%M:%S.000Z"),
+                "user": self.user_email,
+            })
+            response = await self._request("GET", f"/booking/filter/?{params}")
+        else:
+            response = await self._request("GET", "/booking/")
         response.raise_for_status()
         return response.json()
 
@@ -200,7 +219,8 @@ class SeatsurfingClient:
         response = await self._request(
             "POST",
             "/booking/",
-            {"spaceId": space_id, "enter": enter, "leave": leave, "subject": subject, "userEmail": ""},
+            {"spaceId": space_id, "enter": enter, "leave": leave, "subject": subject,
+             "userEmail": self.user_email if self.api_token else ""},
         )
         if response.status_code != 201:
             error_msg = f"Booking failed with status {response.status_code}: {response.text}"
@@ -212,6 +232,12 @@ class SeatsurfingClient:
     async def delete_booking(self, booking_id: str) -> None:
         """Delete a booking."""
         await self.ensure_authenticated()
+        if self.api_token:
+            # The token may cancel anyone's booking. Only touch the configured user's.
+            response = await self._request("GET", f"/booking/{booking_id}")
+            response.raise_for_status()
+            if response.json().get("userEmail", "").lower() != self.user_email.lower():
+                raise RuntimeError(f"Booking {booking_id} belongs to someone else; not cancelling it.")
         response = await self._request("DELETE", f"/booking/{booking_id}")
         response.raise_for_status()
 
@@ -346,7 +372,7 @@ async def list_tools() -> list[Tool]:
     return [
         Tool(
             name="seatsurfing_login",
-            description="Login to Seatsurfing with email and password. Required before using other tools (unless auto-login via environment variables is configured).",
+            description="Login to Seatsurfing: with the API token from the config file or SEATSURFING_API_TOKEN if one is set, otherwise with email and password. Required before using other tools (unless auto-login is configured).",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -498,12 +524,29 @@ async def call_tool(name: str, arguments: dict[str, Any]) -> list[TextContent]:
             email = arguments.get("email") or get_credential("email", "SEATSURFING_EMAIL", config)
             password = arguments.get("password") or get_credential("password", "SEATSURFING_PASSWORD", config)
             organization_id = arguments.get("organization_id") or get_credential("organization_id", "SEATSURFING_ORG_ID", config)
+            # Never a tool argument, so the token stays out of the conversation.
+            api_token = get_credential("api_token", "SEATSURFING_API_TOKEN", config)
+            if api_token:
+                # With a token, URL and email come from the config or environment
+                # only. A tool argument must not send the token to another server
+                # or book for another user.
+                url = get_credential("url", "SEATSURFING_URL", config)
+                email = get_credential("email", "SEATSURFING_EMAIL", config)
 
             if not url:
                 return [TextContent(
                     type="text",
                     text="Error: Seatsurfing URL is required. Run /seatsurfing:setup to configure.",
                 )]
+            if api_token:
+                if not email:
+                    return [TextContent(
+                        type="text",
+                        text="Error: Email is required with an API token; bookings are made for that user. Run /seatsurfing:setup to configure.",
+                    )]
+                client = SeatsurfingClient(url, api_token=api_token, user_email=email)
+                account = await client.get_me()
+                return [TextContent(type="text", text=f"Token accepted ({account.get('email', 'service account')}); booking as {email}")]
             if not email or not password:
                 return [TextContent(
                     type="text",
@@ -654,8 +697,11 @@ async def run_server():
     email = get_credential("email", "SEATSURFING_EMAIL", config)
     password = get_credential("password", "SEATSURFING_PASSWORD", config)
     organization_id = get_credential("organization_id", "SEATSURFING_ORG_ID", config)
+    api_token = get_credential("api_token", "SEATSURFING_API_TOKEN", config)
 
-    if url and email and password and organization_id:
+    if url and email and api_token:
+        client = SeatsurfingClient(url, api_token=api_token, user_email=email)
+    elif url and email and password and organization_id:
         client = SeatsurfingClient(url)
         try:
             await client.login(email, password, organization_id)

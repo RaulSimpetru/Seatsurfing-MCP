@@ -78,16 +78,25 @@ This saves your credentials to `~/.seatsurfing/config.json` and works across all
 |----------|----------|-------------|
 | `SEATSURFING_URL` | Yes | Base URL of your Seatsurfing instance |
 | `SEATSURFING_EMAIL` | Yes | Your login email |
-| `SEATSURFING_PASSWORD` | Yes | Your password |
-| `SEATSURFING_ORG_ID` | Yes | Your organization UUID |
+| `SEATSURFING_PASSWORD` | Password login | Your password |
+| `SEATSURFING_ORG_ID` | Password login | Your organization UUID |
+| `SEATSURFING_API_TOKEN` | SSO accounts | API token of a service account, used instead of password and organization |
+
+The config file uses the keys `url`, `email`, `password`, `organization_id` and `api_token`.
+
+### SSO accounts (API token)
+
+Seatsurfing refuses password login for accounts that sign in through an SSO provider, and it has no SSO login for command-line tools. For those accounts use an API token:
+
+1. A Seatsurfing admin creates a user of type "Service account (read/write)" and gives it a role with bookings admin rights.
+2. On that account, "Generate token". The token is shown once.
+3. Put the token in `api_token` (or `SEATSURFING_API_TOKEN`) together with `url` and your own `email`.
+
+Bookings are created for your email, "my bookings" lists yours, and the plugin refuses to cancel a booking that is not yours. The token itself can book and cancel for anyone in the organization, so keep it private.
 
 ### Finding Your Organization ID
 
-1. Open your Seatsurfing web app
-2. Open browser Developer Tools (F12)
-3. Go to the Network tab
-4. Login and look at the POST request to `/auth/login`
-5. The `organizationId` is in the request payload
+Only needed for password login. Open `<your Seatsurfing URL>/auth/org/<hostname of that URL>` in a browser; the `id` inside `organization` is your organization ID.
 
 ## Usage
 

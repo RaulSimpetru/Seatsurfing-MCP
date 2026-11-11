@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-11-11
+
+### Added
+
+- API token login for servers where users sign in through SSO. Seatsurfing refuses password login for those accounts. Set `api_token` in the config file, or `SEATSURFING_API_TOKEN`, to the token of a service account with bookings admin rights. Bookings are created for the configured email, "my bookings" lists that user's bookings, and cancelling a booking that belongs to someone else is refused.
+- `tests/test_token_mode.py`: token mode and password mode against a fake server.
+
+### Changed
+
+- `/seatsurfing:setup` asks how you sign in and writes the matching config template.
+- The organization ID is now looked up at `<url>/auth/org/<hostname>` instead of in the browser's network tab.
+
 ## [1.4.1] - 2026-11-11
 
 ### Fixed
